@@ -1,96 +1,79 @@
 # 🛒 Customer Segmentation — Online Retail (FiveGuys Project)
 
-###  Team Members  
-**Aditya Nuli**, **Aditya Jaiswal**, **Abhishek Sharma**, **Amar Anand**, and **Sanskar Garg**
-
 ---
 
 ## Project Overview
 
-This project demonstrates an **iterative machine learning approach** to customer segmentation and prediction using the **Online Retail dataset**.  
-Our key insight: **“Better data beats a better algorithm.”**  
-By refining our segmentation strategy from **K-Means** to **Gaussian Mixture Models (GMM)**, we improved model performance by **17 percentage points**, achieving a final accuracy of **94%**.
+This project implements an end-to-end pipeline that turns transactional data into actionable customer segments and a production-ready classifier for online retail.  
+We compute RFM features, use **Gaussian Mixture Models (GMM)** to discover three behavioral segments, and train an optimized **XGBoost** classifier on the GMM labels. The final XGBoost model achieves **96.1% test accuracy**, demonstrating that improved segmentation significantly raises downstream predictive performance. :contentReference[oaicite:5]{index=5}
 
 ---
 
-##  Business Objective
+## Business Objective
 
-In e-commerce, understanding customer behavior is essential for:
-
+In e-commerce, understanding customer behavior enables:
 1. **Targeted marketing**  
 2. **Customer retention**  
-3. **Product recommendation**
+3. **Product / campaign personalization**
 
-We aim to:
-- **Discover meaningful customer segments** from historical transaction data (unsupervised learning)
-- **Build predictive models** that classify new customers into these segments based on early purchase patterns
+Goals:
+- Discover meaningful customer segments from historical transactions (unsupervised).  
+- Build a predictive model that classifies new/early customers into these segments for targeted actions.
 
 ---
 
 ## Dataset
 
-**Source:** [UCI Machine Learning Repository – Online Retail Dataset](https://archive.ics.uci.edu/ml/datasets/Online+Retail)  
-**Period:** December 2010 – December 2011  
-**Transactions:** 541,909  
+**Source:** UCI Online Retail Dataset (Dec 2010 — Dec 2011)  
+**Transactions:** 541,909 (raw)  
+**Key columns:** `InvoiceNo`, `StockCode`, `Description`, `Quantity`, `InvoiceDate`, `UnitPrice`, `CustomerID`, `Country`
 
-**Features:**
-- `InvoiceNo`, `StockCode`, `Description`, `Quantity`, `InvoiceDate`, `UnitPrice`, `CustomerID`, `Country`
-
----
-
-##  Methodology
-
-### 1️⃣ Data Preprocessing
-- Handled missing values and duplicate entries  
-- Removed cancelled transactions  
-- Created **RFM metrics** (Recency, Frequency, Monetary value)
-
-### 2️⃣ Baseline Segmentation — K-Means
-- Used elbow and silhouette analysis to find optimal cluster count  
-- Generated initial customer segments
-
-### 3️⃣ Improved Segmentation — Gaussian Mixture Model (GMM)
-- Replaced K-Means with GMM for soft clustering and better cluster boundaries  
-- Achieved more interpretable customer segments
-
-### 4️⃣ Predictive Modeling
-- Built **Logistic Regression**, **Random Forest**, and **XGBoost** models  
-- Used cluster labels as target variables  
-- Evaluated using accuracy, F1-score, and confusion matrix  
-- Achieved **94% accuracy** using **Random Forest with GMM labels**
+**Working sample (model experiments):** training ≈ 3,470, test ≈ 868 (empirical split used in experiments). :contentReference[oaicite:6]{index=6}
 
 ---
 
-##  Results
+## Methodology
 
-| Model | Segmentation | Accuracy |
-|--------|--------------|----------|
-| Logistic Regression | K-Means | 72% |
-| Random Forest | K-Means | 77% |
-| Random Forest | GMM | **94%** |
-
-**Key takeaway:**  
-> Better segmentation (GMM) directly improves predictive accuracy.
+1. **Data preprocessing**
+   - Clean transactions (drop duplicates, handle missing CustomerID), remove cancelled invoices, and compute standard **RFM** metrics and derived behavioral features.
+2. **Baseline segmentation — K-Means**
+   - Used elbow/silhouette analysis to get a baseline cluster solution (K-Means baseline accuracy reported in slides).
+3. **Improved segmentation — Gaussian Mixture Model (GMM)**
+   - GMM produced three soft clusters: **Champions (≈5.7%)**, **Potential Loyalists (≈38.7%)**, **Occasional Buyers (≈55.5%)**. These labels were used as supervised targets. :contentReference[oaicite:7]{index=7}
+4. **Predictive modeling**
+   - Trained and compared Logistic Regression, Random Forest, and **XGBoost** on features independent of the clustering variables.  
+   - Feature vector size used for modeling: **m = 16** (behavioral metrics like frequency_trend, avg_days_between_orders). :contentReference[oaicite:8]{index=8}
+   - XGBoost hyperparameters (example): `max_depth=3`, `learning_rate=0.05` (tuned via CV). :contentReference[oaicite:9]{index=9}
+5. **Scalability — Coreset via Sensitivity Sampling**
+   - Constructed coresets to speed training while preserving accuracy. The 30% coreset retained **~95.2%** test accuracy with **~1.6×** speedup; 10% coreset gave **~92%** accuracy with **~2.02×** speedup. This demonstrates a practical training/accuracy trade-off for large-scale deployment. :contentReference[oaicite:10]{index=10}
 
 ---
 
-##  Tech Stack
+## Results
+
+| Model        | Segmentation | Test Accuracy |
+|--------------|--------------|---------------|
+| Logistic Reg | K-Means      | (baseline)    |
+| Random Forest| K-Means      | (baseline)    |
+| **XGBoost**  | **GMM**      | **96.1%**     |
+
+**Notes:** XGBoost trained on GMM labels produced the best generalization (test ≈ **96.1%**, train ≈ 98.13%) with low training time (~0.30s on the training set). GMM→XGBoost substantially outperformed the K-Means baseline (K-Means baseline ≈ 74.9%). 
+
+**Key takeaway:** Better segmentation (soft clusters from GMM) directly improves the supervised classifier’s accuracy.
+
+---
+
+## Tech Stack
 
 - **Language:** Python  
-- **Libraries:** Pandas, NumPy, Scikit-learn, Matplotlib, Seaborn  
-- **Models:** K-Means, GMM, Random Forest, XGBoost  
-- **Visualization:** Seaborn, Matplotlib  
-- **Notebook:** Jupyter (`FiveGuys_new_updated.ipynb`)
+- **Libraries:** pandas, numpy, scikit-learn, xgboost, matplotlib, seaborn  
+- **Models / Techniques:** RFM feature engineering, K-Means, GMM, Random Forest, XGBoost, coreset (sensitivity sampling)  
+- **Notebook:** `endsem-2.ipynb` *(update name if different in repo)*
 
 ---
 
-##  Insights
+## Insights & Future Work
 
-- RFM features effectively represent customer purchase behavior  
-- GMM captures overlapping customer patterns better than K-Means  
-- Improved segmentation leads to higher predictive performance
-
----
-
-
-
+- RFM and derived behavioral metrics strongly separate customer behaviors.  
+- GMM’s soft clustering captures overlapping behavior better than hard K-Means, improving label quality for the supervised step. :contentReference[oaicite:12]{index=12}  
+- Coreset sampling is a practical speed/accuracy trade-off for large datasets; future work includes applying the coreset pipeline to N > 1M rows and recursive micro-segmentation for the large “Occasional Buyers” cohort. :contentReference[oaicite:13]{index=13}
