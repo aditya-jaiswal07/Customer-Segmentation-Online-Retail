@@ -1,4 +1,4 @@
-# 🛒 Customer Segmentation — Online Retail (FiveGuys Project)
+# 🛒 Customer Segmentation — Online Retail
 
 ---
 
